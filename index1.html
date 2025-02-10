@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Quiz Game</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        #game-container {
+            margin: auto;
+            width: 500px;
+            padding: 20px;
+            border: 2px solid black;
+            background-color: lightblue;
+        }
+        .question-box {
+            font-size: 24px;
+            margin: 20px;
+        }
+        .option-button {
+            display: block;
+            margin: 10px auto;
+            padding: 10px;
+            font-size: 20px;
+            width: 150px;
+        }
+        .level-button {
+            margin: 5px;
+            padding: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Math Quiz Game</h1>
+    <div>
+        <button class="level-button" onclick="startGame('easy')">Easy</button>
+        <button class="level-button" onclick="startGame('medium')">Medium</button>
+        <button class="level-button" onclick="startGame('hard')">Hard</button>
+    </div>
+    <div id="game-container"></div>
+    <script>
+        let usedQuestions = new Set();
+        let currentLevel = '';
+        let questionCount = 0;
+        
+        function generateQuestion(level) {
+            let num1, num2, min, max;
+            if (level === 'easy') {
+                min = 1; max = 9;
+            } else if (level === 'medium') {
+                min = 10; max = 30;
+            } else {
+                min = 30; max = 50;
+            }
+            num1 = Math.floor(Math.random() * (max - min + 1)) + min;
+            num2 = Math.floor(Math.random() * (max - min + 1)) + min;
+            let questionTypes = ['+', '-', '>', '<', '=', 'asc', 'desc'];
+            let questionType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+            let question, answer, options;
+            
+            if (questionType === '+') {
+                question = `${num1} + ${num2} = ?`;
+                answer = num1 + num2;
+                options = generateOptions(answer, min + max);
+            } else if (questionType === '-') {
+                if (num1 < num2) [num1, num2] = [num2, num1];
+                question = `${num1} - ${num2} = ?`;
+                answer = num1 - num2;
+                options = generateOptions(answer, max);
+            } else if (questionType === 'asc' || questionType === 'desc') {
+                let num3 = Math.floor(Math.random() * (max - min + 1)) + min;
+                let numbers = [num1, num2, num3];
+                question = `Arrange in ${questionType === 'asc' ? 'ascending' : 'descending'} order: ${numbers.join(', ')}`;
+                answer = questionType === 'asc' ? numbers.sort((a, b) => a - b).join(', ') : numbers.sort((a, b) => b - a).join(', ');
+                options = [answer, numbers.reverse().join(', '), numbers.sort(() => Math.random() - 0.5).join(', ')];
+            } else {
+                question = `${num1} ? ${num2}`;
+                answer = num1 > num2 ? '>' : num1 < num2 ? '<' : '=';
+                options = ['>', '<', '='];
+            }
+            return { question, answer, options };
+        }
+        
+        function startGame(level) {
+            if (questionCount >= 30) {
+                usedQuestions.clear();
+                questionCount = 0;
+            }
+            
+            currentLevel = level;
+            let newQuestion;
+            
+            do {
+                newQuestion = generateQuestion(level);
+            } while (usedQuestions.has(newQuestion.question));
+            
+            usedQuestions.add(newQuestion.question);
+            questionCount++;
+            
+            document.getElementById('game-container').innerHTML = `
+                <div class='question-box'>${newQuestion.question}</div>
+                ${newQuestion.options.map(option => `<button class='option-button' onclick='checkAnswer("${option}", "${newQuestion.answer}")'>${option}</button>`).join('')}
+            `;
+        }
+        
+        function generateOptions(correctAnswer, max) {
+            let options = new Set([correctAnswer]);
+            while (options.size < 3) {
+                let randomOption = Math.floor(Math.random() * max) + 1;
+                options.add(randomOption);
+            }
+            return Array.from(options).sort(() => Math.random() - 0.5);
+        }
+        
+        function checkAnswer(selectedAnswer, correctAnswer) {
+            if (selectedAnswer == correctAnswer) {
+                document.getElementById('game-container').innerHTML = '<h2>Correct Answer!</h2>';
+            } else {
+                document.getElementById('game-container').innerHTML = '<h2>Wrong Answer!</h2>';
+            }
+            setTimeout(() => startGame(currentLevel), 2000);
+        }
+    </script>
+</body>
+</html>
